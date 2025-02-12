@@ -3,10 +3,9 @@ import React, { useState, useRef } from "react";
 import Moveable from "react-moveable";
 
 function Widget() {
-  const [tabBtnValue, settabBtnValue] = useState(1);
   const [tab, setTab] = useState([]);
   const [inputValue, setInputValue] = useState("");
-  const [frameUrl, setFrameUrl] = useState(null);
+
   const [widget, setWidget] = useState([]);
   const iframeDivRef = useRef(null); // Added ref for iframe container
 
@@ -23,18 +22,17 @@ function Widget() {
     });
   };
 
-  const addTab = (e) => {
+  const addTab = (e, widgetId) => {
     e.preventDefault();
 
     setTab((prev) => {
       const exsistingTab = prev.find((tab) => {
-        // console.log(tab,"tabfindvalue")
         return tab.id == widget.length;
       });
 
       if (exsistingTab) {
         return prev.map((tab) => {
-          // console.log(tab,"prevtab")
+          console.log(e.target.value == widgetId, "prevtab");
           return tab.id == widget.length
             ? {
                 ...tab,
@@ -56,19 +54,11 @@ function Widget() {
         ];
       }
     });
-
-    // setFrameUrl(() => {
-    //   return tab.map((tabQuery) => {
-    //     return tabQuery.widgetTab.map((query) => {
-    //       return query.query;
-    //     });
-    //   });
-    // });
     setInputValue("");
 
     setWidget((prev) => {
       return prev.map((w) => {
-        if (w.widgetId === widget.length) {
+        if (w.widgetId == widgetId) {
           return {
             ...w,
             WidgetTabs: [
@@ -89,12 +79,6 @@ function Widget() {
         return w.widgetId === widgetId ? { ...w, frameUrl: tabs.query } : w;
       });
     });
-    // settabBtnValue(e.target.value);
-    // if (e.target.value == tabs.tabId) {
-    //   setFrameUrl(tabs.query);
-    // } else {
-    //   setFrameUrl("fail");
-    // }
   };
 
   const onChange = (e) => {
@@ -105,7 +89,7 @@ function Widget() {
 
   console.log(widget, "widget");
   return (
-    <div className="main-widget-div p-4" style={{ marginTop: "50%" }}>
+    <div className="main-widget-div p-4" style={{ marginTop: "50%", width:"100%" }}>
       <button onClick={addWidget}>Add Widget</button>
       <div className="input-div my-2">
         <input
@@ -115,19 +99,13 @@ function Widget() {
           placeholder="Enter URL"
           className="border p-1"
         />
-        <button
-          onClick={addTab}
-          className="ml-2 bg-blue-500 text-white px-2 py-1"
-        >
-          Add
-        </button>
       </div>
 
       <div
         className="main-div-tab-iframe"
         ref={iframeDivRef}
         style={{
-          width: `400px`,
+          width: `100%`,
           height: `300px`,
           position: "relative",
           display: "flex",
@@ -137,12 +115,11 @@ function Widget() {
           overflow: "hidden", // Prevent content overflow during resize
         }}
       >
-
         <div
           ref={iframeDivRef}
           className="iframe-div border"
           style={{
-            width: `400px`,
+            width: `100%`,
             height: `300px`,
             position: "relative",
             display: "flex",
@@ -154,9 +131,15 @@ function Widget() {
         >
           {widget.map((widget) => {
             return (
-              <div className="widget-main-div">
+              <div
+                className="widget-main-div"
+                style={{ display: "flex", flexDirection: "column" }}
+              >
                 {tab && (
-                  <div className="widget-tab-div">
+                  <div
+                    className="widget-tab-div"
+                    style={{ display: "flex", justifyContent: "space-between" }}
+                  >
                     {widget.WidgetTabs.map((tabs) => (
                       <button
                         key={tabs.tabId}
@@ -167,8 +150,20 @@ function Widget() {
                         Tab {tabs.tabId}
                       </button>
                     ))}
+
+                    <div className="add-btn-div">
+                      {" "}
+                      <button
+                        onClick={(e) => addTab(e, widget.widgetId)}
+                        value={widget.widgetId}
+                        className="ml-2 bg-blue-500 text-white px-2 py-1"
+                      >
+                        Add
+                      </button>
+                    </div>
                   </div>
                 )}
+
                 <div className="widget-i-frame-div">
                   {" "}
                   <iframe
@@ -186,7 +181,7 @@ function Widget() {
           })}
         </div>
 
-        {/* <Moveable
+        <Moveable
             target={iframeDivRef.current} // Target using ref
             origin={true}
             edge={false}
@@ -209,7 +204,7 @@ function Widget() {
             keepRatio={true}
             resizable={true}
             throttleResize={0}
-          /> */}
+          />
       </div>
     </div>
   );
