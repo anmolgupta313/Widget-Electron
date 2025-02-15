@@ -1,11 +1,11 @@
 "use client";
 import React, { useState, useRef } from "react";
 import Moveable from "react-moveable";
+import Tab from "./Tab";
 
 function Widget() {
-  const [tab, setTab] = useState([]);
   const [inputValue, setInputValue] = useState("");
-
+  const [tabV, setTabV] = useState();
   const [widget, setWidget] = useState([]);
   const iframeDivRef = useRef(null); // Added ref for iframe container
 
@@ -25,35 +25,6 @@ function Widget() {
   const addTab = (e, widgetId) => {
     e.preventDefault();
 
-    setTab((prev) => {
-      const exsistingTab = prev.find((tab) => {
-        return tab.id == widget.length;
-      });
-
-      if (exsistingTab) {
-        return prev.map((tab) => {
-          console.log(e.target.value == widgetId, "prevtab");
-          return tab.id == widget.length
-            ? {
-                ...tab,
-                widgetTab: [
-                  ...tab.widgetTab,
-                  { tabId: tab.widgetTab.length + 1, query: inputValue },
-                ],
-              }
-            : "";
-        });
-      } else {
-        return [
-          ...prev,
-
-          {
-            id: widget.length,
-            widgetTab: [{ tabId: tab.length + 1, query: inputValue }],
-          },
-        ];
-      }
-    });
     setInputValue("");
 
     setWidget((prev) => {
@@ -74,6 +45,7 @@ function Widget() {
   };
 
   const tabValue = (e, widgetId, tabs) => {
+    setTabV(e.target.value);
     setWidget((prev) => {
       return prev.map((w) => {
         return w.widgetId === widgetId ? { ...w, frameUrl: tabs.query } : w;
@@ -81,15 +53,50 @@ function Widget() {
     });
   };
 
+  const delTab = (e, widgetId, widgetTab) => {
+    if (e.target.value != widgetId) return;
+
+    if (e.target.value == widgetId) {
+      const filWidget = widgetTab.filter((tab) => {
+        return tab.tabId != tabV;
+      });
+
+      const updatedTabs = filWidget.map((tab, index) => ({
+        ...tab,
+        tabId: index + 1, // Assign new sequential tabId
+      }));
+
+      console.log(updatedTabs, "updated");
+      setWidget((prev) => {
+        return prev.map((w) => {
+          if (w.widgetId == widgetId) {
+            return {
+              ...w,
+              WidgetTabs: updatedTabs,
+              frameUrl: updatedTabs.length
+                ? updatedTabs[updatedTabs.length - 1].query
+                : "",
+            };
+          }
+          return w;
+        });
+      });
+      console.log(filWidget, "filWidget");
+      console.log(tabV);
+      console.log(widgetTab, "widgteTab");
+    }
+    return widget;
+  };
+
   const onChange = (e) => {
     setInputValue(e.target.value);
   };
 
-  console.log(tab, "tabss");
-
-  console.log(widget, "widget");
   return (
-    <div className="main-widget-div p-4" style={{ marginTop: "50%", width:"100%" }}>
+    <div
+      className="main-widget-div p-4"
+      style={{ marginTop: "50%", width: "100%" }}
+    >
       <button onClick={addWidget}>Add Widget</button>
       <div className="input-div my-2">
         <input
@@ -135,34 +142,18 @@ function Widget() {
                 className="widget-main-div"
                 style={{ display: "flex", flexDirection: "column" }}
               >
-                {tab && (
-                  <div
-                    className="widget-tab-div"
-                    style={{ display: "flex", justifyContent: "space-between" }}
-                  >
-                    {widget.WidgetTabs.map((tabs) => (
-                      <button
-                        key={tabs.tabId}
-                        onClick={(e) => tabValue(e, widget.widgetId, tabs)}
-                        value={tabs.tabId}
-                        className="px-3 py-1 bg-gray-300 rounded hover:bg-gray-400"
-                      >
-                        Tab {tabs.tabId}
-                      </button>
-                    ))}
-
-                    <div className="add-btn-div">
-                      {" "}
-                      <button
-                        onClick={(e) => addTab(e, widget.widgetId)}
-                        value={widget.widgetId}
-                        className="ml-2 bg-blue-500 text-white px-2 py-1"
-                      >
-                        Add
-                      </button>
-                    </div>
-                  </div>
-                )}
+                <div
+                  className="widget-tab-div"
+                  style={{ display: "flex", justifyContent: "space-between" }}
+                >
+                  <Tab
+                    widgetTab={widget.WidgetTabs}
+                    widgetId={widget.widgetId}
+                    addTab={addTab}
+                    tabValue={tabValue}
+                    delTab={delTab}
+                  />
+                </div>
 
                 <div className="widget-i-frame-div">
                   {" "}
@@ -182,29 +173,29 @@ function Widget() {
         </div>
 
         <Moveable
-            target={iframeDivRef.current} // Target using ref
-            origin={true}
-            edge={false}
-            draggable={true}
-            throttleDrag={0}
-            onDrag={({ target, transform }) => {
-              target.style.transform = transform;
-            }}
-            onResize={({ target, width, height, delta }) => {
-              if (delta[0]) target.style.width = `${width}px`;
-              if (delta[1]) target.style.height = `${height}px`;
+          target={iframeDivRef.current} // Target using ref
+          origin={true}
+          edge={false}
+          draggable={true}
+          throttleDrag={0}
+          onDrag={({ target, transform }) => {
+            target.style.transform = transform;
+          }}
+          onResize={({ target, width, height, delta }) => {
+            if (delta[0]) target.style.width = `${width}px`;
+            if (delta[1]) target.style.height = `${height}px`;
 
-              // Resize the iframe as well
-              const iframe = target.querySelector("iframe");
-              if (iframe) {
-                iframe.style.width = "100%";
-                iframe.style.height = "100%";
-              }
-            }}
-            keepRatio={true}
-            resizable={true}
-            throttleResize={0}
-          />
+            // Resize the iframe as well
+            const iframe = target.querySelector("iframe");
+            if (iframe) {
+              iframe.style.width = "100%";
+              iframe.style.height = "100%";
+            }
+          }}
+          keepRatio={true}
+          resizable={true}
+          throttleResize={0}
+        />
       </div>
     </div>
   );
